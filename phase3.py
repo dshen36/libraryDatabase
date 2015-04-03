@@ -66,6 +66,8 @@ class GUI:
         #check to see if username and password is in the database
         sql = "SELECT Username,Password FROM User"
         c.execute(sql)
+        sql1 = "SELECT Username FROM User WHERE Username=%s AND Password=%s"
+        c.execute(sql1,self.username,password)
         data = c.fetchall()
 
         user = (self.username,password)
