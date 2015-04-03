@@ -46,37 +46,37 @@ class GUI:
         self.secondwin.deiconify()
         self.mainwin.withdraw()
 
-    def Connect(self):
-        try:
-            db = pymysql.connect(host="academic-mysql.cc.gatech.edu",passwd="am4uNpz1",
-                                 user="cchan61",db="cs2316db")
+    # def Connect(self):
+    #     try:
+    #         db = pymysql.connect(host="academic-mysql.cc.gatech.edu",passwd="am4uNpz1",
+    #                              user="cchan61",db="cs2316db")
             
-            return db
-        except:
-            info = messagebox.showinfo("Problem!", "Cannot connect to the database! Please check your internet connection.")            
-            return None
+    #         return db
+    #     except:
+    #         info = messagebox.showinfo("Problem!", "Cannot connect to the database! Please check your internet connection.")            
+    #         return None
 
-    def LoginCheck(self):
-        self.database = self.Connect()
-        c = self.database.cursor()
+    # def LoginCheck(self):
+    #     self.database = self.Connect()
+    #     c = self.database.cursor()
         
-        self.username = self.sv.get()
-        password = self.sv2.get()
+    #     self.username = self.sv.get()
+    #     password = self.sv2.get()
 
-        #check to see if username and password is in the database
-        sql = "SELECT Username,Password FROM User"
-        c.execute(sql)
-        sql1 = "SELECT Username FROM User WHERE Username=%s AND Password=%s"
-        c.execute(sql1,self.username,password)
-        data = c.fetchall()
+    #     #check to see if username and password is in the database
+    #     sql = "SELECT Username,Password FROM User"
+    #     c.execute(sql)
+    #     sql1 = "SELECT Username FROM User WHERE Username=%s AND Password=%s"
+    #     c.execute(sql1,self.username,password)
+    #     data = c.fetchall()
 
-        user = (self.username,password)
-        if user in data:
-            c.close()
-            self.SearchBooks()
-            self.mainwin.withdraw()
-        else:
-            info2 = messagebox.showinfo("","You entered an unrecognizable username/password combination")
+    #     user = (self.username,password)
+    #     if user in data:
+    #         c.close()
+    #         self.SearchBooks()
+    #         self.mainwin.withdraw()
+    #     else:
+    #         info2 = messagebox.showinfo("","You entered an unrecognizable username/password combination")
 
     def RegisterPage(self):
         self.secondwin = Toplevel()
@@ -106,41 +106,41 @@ class GUI:
         f3 = Frame(self.secondwin)
         f3.config(bg="white")
         f3.grid(row=2,column=2)
-        b2 = Button(f3,text="Register",command=self.RegistrationCheck)
+        b2 = Button(f3,text="Register",command=self.CreateProfile)#,command=self.RegistrationCheck)
         b2.grid(row=4,column=3,padx=2,pady=2)
 
-    def RegistrationCheck(self):
-        try:
-            #check to see if username has not already been registered
-            username = self.e2.get()
+    # def RegistrationCheck(self):
+    #     try:
+    #         #check to see if username has not already been registered
+    #         username = self.e2.get()
 
-            db = self.Connect()
-            c = db.cursor()
+    #         db = self.Connect()
+    #         c = db.cursor()
 
-            sql = "SELECT Username FROM User"
-            c.execute(sql)
-            data = c.fetchall()
+    #         sql = "SELECT Username FROM User"
+    #         c.execute(sql)
+    #         data = c.fetchall()
 
-            # username is valid
-            if username not in data:
-                #check if password and confirm password are the same
-                if self.e3.get() != self.e4.get():
-                     error = messagebox.showinfo("Problem!","Password and Confirm Password do not match.")
-                #password and confirm password are the same, continue
-                else:
-                    password = self.e3.get()
+    #         # username is valid
+    #         if username not in data:
+    #             #check if password and confirm password are the same
+    #             if self.e3.get() != self.e4.get():
+    #                  error = messagebox.showinfo("Problem!","Password and Confirm Password do not match.")
+    #             #password and confirm password are the same, continue
+    #             else:
+    #                 password = self.e3.get()
 
-                    sql = "INSERT INTO User (Username, Password) VALUES (%s,%s)"
-                    c.execute(sql, (username, password))
-                    c.close()
-                    db.commit()
-                    db.close()
-                    self.secondwin.withdraw()
-                    self.CreateProfile()
-            else:
-                error4 = messagebox.showinfo("Problem","The username already exists.")
-        except:
-            error4 = messagebox.showinfo("Problem","The username already exists.")
+    #                 sql = "INSERT INTO User (Username, Password) VALUES (%s,%s)"
+    #                 c.execute(sql, (username, password))
+    #                 c.close()
+    #                 db.commit()
+    #                 db.close()
+    #                 self.secondwin.withdraw()
+    #                 self.CreateProfile()
+    #         else:
+    #             error4 = messagebox.showinfo("Problem","The username already exists.")
+    #     except:
+    #         error4 = messagebox.showinfo("Problem","The username already exists.")
                     
 
     def CreateProfile(self):
@@ -200,10 +200,10 @@ class GUI:
         option = OptionMenu(f3,var2,"M","F")
         option.grid(row=4,column=1)
         
-        b = Button(f3,text="Submit")
+        b = Button(f3,text="Submit",command=self.HomeScreen)
         b.grid(row=5,column=1,padx=2,pady=2)
 
-        self.SearchBooks()
+        #self.SearchBooks()
         
     def SearchBooks(self):
 
@@ -238,8 +238,8 @@ class GUI:
         b3 = Button(f2,text="Close")
         b3.grid(row=4,column=2)
 
-        self.fourthwin.withdraw()
-        self.RequestExtension()
+        #self.fourthwin.withdraw()
+        #self.RequestExtension()
 
     def RequestExtension(self):
 
@@ -291,7 +291,7 @@ class GUI:
         b2 = Button(f2,text="Submit")
         b2.grid(row=4,column=3)
 
-        self.BookCheckout()
+        #self.BookCheckout()
 
     def FutureHoldRequest(self):
         self.seventhwin = Toplevel()
@@ -467,13 +467,13 @@ class GUI:
         b = Button(f,text="Seach Books",command=self.SearchBooks)#command=self.HomeScreen
         b.grid(row=0,column=0,padx=80,pady=10)
         b2 = Button(f,text="Request Extension",command=self.RequestExtension)#command=self.HomeScreen
-        b2.grid(row=2,column=0,padx=80,pady=10)
+        b2.grid(row=1,column=0,padx=80,pady=10)
         b3 = Button(f,text="Future Hold Request",command=self.FutureHoldRequest)#command=self.HomeScreen
         b3.grid(row=2,column=0,padx=80,pady=10)
         b4 = Button(f,text="Track Book Location",command=self.TrackBookLocation)#command=self.HomeScreen
         b4.grid(row=3,column=0,padx=80,pady=10)
-        #b5 = Button(f,text="Book Checkout",command=self.BookCheckout)#command=self.HomeScreen
-        #b5.grid(row=4,column=0,padx=80,pady=10)
+        b5 = Button(f,text="Book Checkout",command=self.BookCheckout)#command=self.HomeScreen
+        b5.grid(row=4,column=0,padx=80,pady=10)
         b6 = Button(f,text="Return Book",command=self.ReturnBook)#command=self.HomeScreen
         b6.grid(row=5,column=0,padx=80,pady=10)
 
