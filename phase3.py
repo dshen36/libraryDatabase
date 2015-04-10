@@ -48,8 +48,8 @@ class GUI:
 
     def Connect(self):
         try:
-            db = pymysql.connect(host="academic-mysql.cc.gatech.edu",passwd="am4uNpz1",
-                                 user="cchan61",db="cs2316db")
+            db = pymysql.connect(host="academic-mysql.cc.gatech.edu",passwd="DC5xMas8",
+                                 user="cs4400_Group_18",db="cs4400_Group_18")
             
             return db
         except:
@@ -66,8 +66,8 @@ class GUI:
         #check to see if username and password is in the database
         sql = "SELECT Username,Password FROM User"
         c.execute(sql)
-        sql1 = "SELECT Username FROM User WHERE Username=%s AND Password=%s"
-        c.execute(sql1,self.username,password)
+##        sql1 = "SELECT Username FROM User WHERE Username=%s AND Password=%s"
+##        c.execute(sql1,self.username,password)
         data = c.fetchall()
 
         user = (self.username,password)
