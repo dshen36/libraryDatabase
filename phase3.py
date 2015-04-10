@@ -37,7 +37,7 @@ class GUI:
         f3=Frame(self.mainwin)
         f3.config(bg="white")
         f3.grid(row=3,column=2)
-        b1 = Button(f3,text="Login")#,command=self.LoginCheck)
+        b1 = Button(f3,text="Login",command=self.LoginCheck)
         b1.grid(row=3,column=2,padx=2,pady=2)
         b2 = Button(f3,text="Create Account",command=self.ToRegister)
         b2.grid(row=3,column=3,padx=2,pady=2)
@@ -64,19 +64,22 @@ class GUI:
         password = self.sv2.get()
 
         #check to see if username and password is in the database
-        sql = "SELECT Username,Password FROM User"
-        c.execute(sql)
-##        sql1 = "SELECT Username FROM User WHERE Username=%s AND Password=%s"
-##        c.execute(sql1,self.username,password)
+        #sql = "SELECT Username,Password FROM User"
+        #c.execute(sql)
+        sql = "SELECT COUNT(*) FROM User WHERE Username = %s AND Password = %s"
+        c.execute(sql,(self.username,password))
         data = c.fetchall()
+        #print(data)
 
-        user = (self.username,password)
+        user = (1,)
+
         if user in data:
+            info2 = messagebox.showinfo("","You logged in successfully.")
             c.close()
             self.SearchBooks()
             self.mainwin.withdraw()
         else:
-            info2 = messagebox.showinfo("","You entered an unrecognizable username/password combination")
+            info3 = messagebox.showinfo("","You entered an unrecognizable username/password combination")
 
     def RegisterPage(self):
         self.secondwin = Toplevel()
@@ -112,7 +115,7 @@ class GUI:
     def RegistrationCheck(self):
         try:
             #check to see if username has not already been registered
-            username = self.e2.get()
+            username = self.e.get()
 
             db = self.Connect()
             c = db.cursor()
@@ -124,11 +127,11 @@ class GUI:
             # username is valid
             if username not in data:
                 #check if password and confirm password are the same
-                if self.e3.get() != self.e4.get():
+                if self.e2.get() != self.e3.get():
                      error = messagebox.showinfo("Problem!","Password and Confirm Password do not match.")
                 #password and confirm password are the same, continue
                 else:
-                    password = self.e3.get()
+                    password = self.e2.get()
 
                     sql = "INSERT INTO User (Username, Password) VALUES (%s,%s)"
                     c.execute(sql, (username, password))
@@ -203,7 +206,7 @@ class GUI:
         b = Button(f3,text="Submit")
         b.grid(row=5,column=1,padx=2,pady=2)
 
-        self.SearchBooks()
+        #self.SearchBooks()
         
     def SearchBooks(self):
 
@@ -238,8 +241,8 @@ class GUI:
         b3 = Button(f2,text="Close")
         b3.grid(row=4,column=2)
 
-        self.fourthwin.withdraw()
-        self.RequestExtension()
+        #self.fourthwin.withdraw()
+        #self.RequestExtension()
 
     def RequestExtension(self):
 
