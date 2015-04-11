@@ -50,6 +50,15 @@ class GUI:
         try:
             db = pymysql.connect(host="academic-mysql.cc.gatech.edu",passwd="DC5xMas8",
                                  user="cs4400_Group_18",db="cs4400_Group_18")
+
+            return db
+        except:
+            info = messagebox.showinfo("Problem!", "Cannot connect to the database! Please check your internet connection.")
+            return None 
+
+    def LoginCheck(self):
+        self.database = self.Connect()
+        c = self.database.cursor()
         
         self.username = self.sv.get()
         password = self.sv2.get()
@@ -134,41 +143,7 @@ class GUI:
             else:
                 error4 = messagebox.showinfo("Problem","The username already exists.")
         except:
-            error4 = messagebox.showinfo("Problem","The username already exists.")
-            
-     def RegistrationCheck(self):
-         try:
-             #check to see if username has not already been registered
-             username = self.e2.get()
-
-             db = self.Connect()
-             c = db.cursor()
-
-             sql = "SELECT Username FROM User"
-             c.execute(sql)
-             data = c.fetchall()
-
-             # username is valid
-             if username not in data:
-                 #check if password and confirm password are the same
-                 if self.e3.get() != self.e4.get():
-                      error = messagebox.showinfo("Problem!","Password and Confirm Password do not match.")
-                 #password and confirm password are the same, continue
-                 else:
-                     password = self.e3.get()
-
-                     sql = "INSERT INTO User (Username, Password) VALUES (%s,%s)"
-                     c.execute(sql, (username, password))
-                     c.close()
-                     db.commit()
-                     db.close()
-                     self.secondwin.withdraw()
-                     self.CreateProfile()
-             else:
-                 error4 = messagebox.showinfo("Problem","The username already exists.")
-         except:
-             error4 = messagebox.showinfo("Problem","The username already exists.")
-                    
+            error4 = messagebox.showinfo("Problem","The username already exists.")                    
 
     def CreateProfile(self):
         self.thirdwin = Toplevel()
