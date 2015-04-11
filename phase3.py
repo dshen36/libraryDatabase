@@ -60,14 +60,14 @@ class GUI:
         self.database = self.Connect()
         c = self.database.cursor()
         
-        self.username = self.sv.get()
+        username = self.sv.get()
         password = self.sv2.get()
 
         #check to see if username and password is in the database
         #sql = "SELECT Username,Password FROM User"
         #c.execute(sql)
         sql = "SELECT COUNT(*) FROM User WHERE Username = %s AND Password = %s"
-        c.execute(sql,(self.username,password))
+        c.execute(sql,(username,password))
         data = c.fetchall()
         #print(data)
 
@@ -109,13 +109,13 @@ class GUI:
         f3 = Frame(self.secondwin)
         f3.config(bg="white")
         f3.grid(row=2,column=2)
-        b2 = Button(f3,text="Register",command=self.CreateProfile)#,command=self.RegistrationCheck)
+        b2 = Button(f3,text="Register",command=self.RegistrationCheck)#,command=self.CreateProfile)
         b2.grid(row=4,column=3,padx=2,pady=2)
 
     def RegistrationCheck(self):
         try:
             #check to see if username has not already been registered
-            username = self.e.get()
+            self.username = self.e.get()
 
             db = self.Connect()
             c = db.cursor()
@@ -124,6 +124,7 @@ class GUI:
             c.execute(sql)
             data = c.fetchall()
 
+            username = (self.username)
             # username is valid
             if username not in data:
                 #check if password and confirm password are the same
@@ -132,7 +133,7 @@ class GUI:
                 #password and confirm password are the same, continue
                 else:
                     password = self.e2.get()
-
+                    
                     sql = "INSERT INTO User (Username, Password) VALUES (%s,%s)"
                     c.execute(sql, (username, password))
                     c.close()
@@ -187,25 +188,60 @@ class GUI:
         l4.grid(row=4,column=0,sticky=W)
         self.e5 = Entry(f3)
         self.e5.grid(row=1,column=1,padx=2,pady=2)
-        var = StringVar(f3)
-        var.set("")
+        #Gender
+        self.var = StringVar(f3)
+        self.var.set("")
         choices = ['M', 'F']
-        self.lb = OptionMenu(f3,var,*choices)
-        self.lb.grid(row=2,column=1,sticky=E)
-        c = Checkbutton(f3, text="Yes", variable=var,bg="white")
+        self.g = OptionMenu(f3,self.var,*choices)
+        self.g.grid(row=2,column=1,sticky=E)
+        #isFaculty
+        self.iv = IntVar(f3)
+        c = Checkbutton(f3, text="Yes", variable=self.iv,bg="white")
         c.grid(row=3,column=1)
 ##        v = StringVar()
 ##        combobox = Combobox(f3,textvariable=v)
 ##        combobox.grid(row=4,column=1)
-        var2 = StringVar(f3)
-        var2.set("")
-        option = OptionMenu(f3,var2,"M","F")
+        #Department
+        self.var2 = StringVar(f3)
+        self.var2.set("")
+        option = OptionMenu(f3,self.var2,"M","F")
         option.grid(row=4,column=1)
         
-        b = Button(f3,text="Submit",command=self.HomeScreen)
+        b = Button(f3,text="Submit",command=self.Create)#command=self.HomeScreen)
         b.grid(row=5,column=1,padx=2,pady=2)
 
         #self.SearchBooks()
+
+    def Create(self):
+        import datetime
+
+        firstName = self.e.get()
+        lastName = self.e5.get()
+        date = self.e2.get()
+        dob = datetime.datetime.strptime(date,"%m/%d/%Y")
+        gender = self.var.get()
+        isDebarred = True
+        email = self.e3.get()
+        address = self.e4.get()
+        if self.iv.get() == 1:
+            isFaculty = True
+        else:
+            isFaculty = False
+        dept = self.var2.get()
+
+        db = self.Connect()
+        c = db.cursor()
+
+        #NEED TO ADD DOB
+        sql = "INSERT INTO StudentFaculty (Username, F_Name, L_Name,Gender,isDebarred,Email,Address,isFaculty,Dept) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        c.execute(sql,(self.username,firstName,lastName,gender,isDebarred,email,address,isFaculty,dept))
+
+        c.close()
+        db.commit()
+        db.close()
+
+        self.thirdwin.withdraw()
+        self.SearchBooks()
         
     def SearchBooks(self):
 
