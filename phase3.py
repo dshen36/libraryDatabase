@@ -50,15 +50,6 @@ class GUI:
         try:
             db = pymysql.connect(host="academic-mysql.cc.gatech.edu",passwd="DC5xMas8",
                                  user="cs4400_Group_18",db="cs4400_Group_18")
-            
-            return db
-        except:
-            info = messagebox.showinfo("Problem!", "Cannot connect to the database! Please check your internet connection.")            
-            return None
-
-    def LoginCheck(self):
-        self.database = self.Connect()
-        c = self.database.cursor()
         
         self.username = self.sv.get()
         password = self.sv2.get()
@@ -109,7 +100,7 @@ class GUI:
         f3 = Frame(self.secondwin)
         f3.config(bg="white")
         f3.grid(row=2,column=2)
-        b2 = Button(f3,text="Register",command=self.RegistrationCheck)
+        b2 = Button(f3,text="Register",command=self.CreateProfile)#,command=self.RegistrationCheck)
         b2.grid(row=4,column=3,padx=2,pady=2)
 
     def RegistrationCheck(self):
@@ -144,6 +135,39 @@ class GUI:
                 error4 = messagebox.showinfo("Problem","The username already exists.")
         except:
             error4 = messagebox.showinfo("Problem","The username already exists.")
+            
+     def RegistrationCheck(self):
+         try:
+             #check to see if username has not already been registered
+             username = self.e2.get()
+
+             db = self.Connect()
+             c = db.cursor()
+
+             sql = "SELECT Username FROM User"
+             c.execute(sql)
+             data = c.fetchall()
+
+             # username is valid
+             if username not in data:
+                 #check if password and confirm password are the same
+                 if self.e3.get() != self.e4.get():
+                      error = messagebox.showinfo("Problem!","Password and Confirm Password do not match.")
+                 #password and confirm password are the same, continue
+                 else:
+                     password = self.e3.get()
+
+                     sql = "INSERT INTO User (Username, Password) VALUES (%s,%s)"
+                     c.execute(sql, (username, password))
+                     c.close()
+                     db.commit()
+                     db.close()
+                     self.secondwin.withdraw()
+                     self.CreateProfile()
+             else:
+                 error4 = messagebox.showinfo("Problem","The username already exists.")
+         except:
+             error4 = messagebox.showinfo("Problem","The username already exists.")
                     
 
     def CreateProfile(self):
@@ -203,7 +227,7 @@ class GUI:
         option = OptionMenu(f3,var2,"M","F")
         option.grid(row=4,column=1)
         
-        b = Button(f3,text="Submit")
+        b = Button(f3,text="Submit",command=self.HomeScreen)
         b.grid(row=5,column=1,padx=2,pady=2)
 
         #self.SearchBooks()
@@ -294,7 +318,7 @@ class GUI:
         b2 = Button(f2,text="Submit")
         b2.grid(row=4,column=3)
 
-        self.BookCheckout()
+        #self.BookCheckout()
 
     def FutureHoldRequest(self):
         self.seventhwin = Toplevel()
@@ -470,13 +494,13 @@ class GUI:
         b = Button(f,text="Seach Books",command=self.SearchBooks)#command=self.HomeScreen
         b.grid(row=0,column=0,padx=80,pady=10)
         b2 = Button(f,text="Request Extension",command=self.RequestExtension)#command=self.HomeScreen
-        b2.grid(row=2,column=0,padx=80,pady=10)
+        b2.grid(row=1,column=0,padx=80,pady=10)
         b3 = Button(f,text="Future Hold Request",command=self.FutureHoldRequest)#command=self.HomeScreen
         b3.grid(row=2,column=0,padx=80,pady=10)
         b4 = Button(f,text="Track Book Location",command=self.TrackBookLocation)#command=self.HomeScreen
         b4.grid(row=3,column=0,padx=80,pady=10)
-        #b5 = Button(f,text="Book Checkout",command=self.BookCheckout)#command=self.HomeScreen
-        #b5.grid(row=4,column=0,padx=80,pady=10)
+        b5 = Button(f,text="Book Checkout",command=self.BookCheckout)#command=self.HomeScreen
+        b5.grid(row=4,column=0,padx=80,pady=10)
         b6 = Button(f,text="Return Book",command=self.ReturnBook)#command=self.HomeScreen
         b6.grid(row=5,column=0,padx=80,pady=10)
 
