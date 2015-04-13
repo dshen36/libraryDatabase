@@ -213,21 +213,24 @@ class GUI:
         #self.SearchBooks()
 
     def Create(self):
-        import datetime
+        import time
 
         firstName = self.e.get()
         lastName = self.e5.get()
-        date = self.e2.get()
-        dob = datetime.datetime.strptime(date,"%m/%d/%Y")
+##        date = self.e2.get()
+##        dob = time.strftime(date,"%m/%d/%Y")
+##        print(dob)
+##        dob = datetime.datetime.strptime(date,"%m/%d/%Y")
         gender = self.var.get()
         isDebarred = True
         email = self.e3.get()
         address = self.e4.get()
         if self.iv.get() == 1:
             isFaculty = True
+            dept = self.var2.get()
         else:
             isFaculty = False
-        dept = self.var2.get()
+            dept = ""
 
         db = self.Connect()
         c = db.cursor()
