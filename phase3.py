@@ -145,10 +145,6 @@ class GUI:
                 error4 = messagebox.showinfo("Problem","The username already exists.")
         except:
             error4 = messagebox.showinfo("Problem","The username already exists.")
-##            
-##    def ToCreate(self):
-##        self.CreateProfile()
-##        self.secondwin.withdraw()
 
     def CreateProfile(self):
         self.thirdwin = Toplevel()
@@ -217,9 +213,6 @@ class GUI:
         b = Button(f3,text="Submit",command=self.Create)#command=self.HomeScreen)
         b.grid(row=5,column=1,padx=2,pady=2)
 
-        
-
-        #self.SearchBooks()
     def checkIsFaculty(self):
         if self.iv.get() == 1:
             self.e6.config(state=NORMAL)
@@ -274,10 +267,13 @@ class GUI:
         l3=Label(f,text="Author",bg="white")
         l3.grid(row=3,column=0,sticky=W)
 
+        #ISBN
         self.e = Entry(f)
         self.e.grid(row=1,column=1,padx=2,pady=2)
+        #Title
         self.e2 = Entry(f)
         self.e2.grid(row=2,column=1,padx=2,pady=2)
+        #Author
         self.e3 = Entry(f)
         self.e3.grid(row=3,column=1,padx=2,pady=2)
 
@@ -286,13 +282,34 @@ class GUI:
         f2.grid(row=2,column=0)
         b = Button(f2,text="Back")
         b.grid(row=4,column=0)
-        b2 = Button(f2,text="Search")
+        b2 = Button(f2,text="Search",command=self.Search)
         b2.grid(row=4,column=1)
         b3 = Button(f2,text="Close")
         b3.grid(row=4,column=2)
 
         #self.fourthwin.withdraw()
         #self.RequestExtension()
+
+    def Search(self):
+        self.isbn = self.e.get()
+        self.title = self.e2.get()
+        self.author = self.e3.get()
+
+        db = self.Connect()
+        c = db.cursor()
+
+        print("searching for books")
+
+        #search title only
+        sql = "SELECT Book.ISBN, Title, Edition, COUNT(*) FROM Book,BookCopy WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve=false AND isCheckedOut=false AND isOnHold=false AND isDamaged=false and Title LIKE %s GROUP By Book.ISBN, Title, Edition"
+        c.execute(sql,('%' + self.title + '%s'))
+        data = c.fetchall()
+        print(data)
+
+        c.close()
+        db.close()
+
+        
 
     def RequestExtension(self):
 
