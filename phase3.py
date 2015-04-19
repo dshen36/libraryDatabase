@@ -144,7 +144,11 @@ class GUI:
             else:
                 error4 = messagebox.showinfo("Problem","The username already exists.")
         except:
-            error4 = messagebox.showinfo("Problem","The username already exists.")                    
+            error4 = messagebox.showinfo("Problem","The username already exists.")
+##            
+##    def ToCreate(self):
+##        self.CreateProfile()
+##        self.secondwin.withdraw()
 
     def CreateProfile(self):
         self.thirdwin = Toplevel()
@@ -196,21 +200,29 @@ class GUI:
         self.g.grid(row=2,column=1,sticky=E)
         #isFaculty
         self.iv = IntVar(f3)
-        c = Checkbutton(f3, text="Yes", variable=self.iv,bg="white")
+        self.iv.set(5)
+        c = Checkbutton(f3, text="Yes", variable=self.iv,bg="white", command=self.checkIsFaculty)
         c.grid(row=3,column=1)
 ##        v = StringVar()
 ##        combobox = Combobox(f3,textvariable=v)
 ##        combobox.grid(row=4,column=1)
         #Department
-        self.var2 = StringVar(f3)
-        self.var2.set("")
-        option = OptionMenu(f3,self.var2,"M","F")
-        option.grid(row=4,column=1)
-        
+##        self.var2 = StringVar(f3)
+##        self.var2.set("")
+##        option = OptionMenu(f3,self.var2,"M","F")
+##        option.grid(row=4,column=1)
+        # dept
+        self.e6 = Entry(f3, state="readonly")
+        self.e6.grid(row=4, column=1)
         b = Button(f3,text="Submit",command=self.Create)#command=self.HomeScreen)
         b.grid(row=5,column=1,padx=2,pady=2)
 
+        
+
         #self.SearchBooks()
+    def checkIsFaculty(self):
+        if self.iv.get() == 1:
+            self.e6.config(state=NORMAL)
 
     def Create(self):
         import time
@@ -227,7 +239,7 @@ class GUI:
         address = self.e4.get()
         if self.iv.get() == 1:
             isFaculty = True
-            dept = self.var2.get()
+            dept = self.e6.get()
         else:
             isFaculty = False
             dept = ""
@@ -236,7 +248,7 @@ class GUI:
         c = db.cursor()
 
         #NEED TO ADD DOB
-        sql = "INSERT INTO StudentFaculty (Username, F_Name, L_Name,Gender,isDebarred,Email,Address,isFaculty,Dept) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        sql = "INSERT INTO StudentFaculty (Username, F_Name, L_Name,Gender,isDebarred,Email,Address,isFaculty,Dept) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         c.execute(sql,(self.username,firstName,lastName,gender,isDebarred,email,address,isFaculty,dept))
 
         c.close()
