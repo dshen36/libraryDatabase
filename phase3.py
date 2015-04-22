@@ -1,6 +1,6 @@
 from tkinter import*
 import pymysql
-import urllib.request
+from re import findall
 
 class GUI:
     def __init__(self,win):
@@ -42,10 +42,42 @@ class GUI:
         b2 = Button(f3,text="Create Account",command=self.ToRegister)
         b2.grid(row=3,column=3,padx=2,pady=2)
 
+    def ToLogin(self):
+        self.mainwin.deiconify()
+        self.fourthwin.withdraw()
+
     def ToRegister(self):
         self.secondwin.deiconify()
         self.mainwin.withdraw()
 
+    def ToSearchFromHome(self):
+        self.fourthwin.deiconify()
+        self.Homewin.withdraw()
+
+    def ToSearchFromHoldRequest(self):
+        self.fourthwin.deiconify()
+        self.fifthwin.withdraw()
+
+    def ToRequestExtension(self):
+        self.sixthwin.deiconify()
+        self.Homewin.withdraw()
+
+    def ToFutureHoldRequest(self):
+        self.seventhwin.deiconify()
+        self.Homewin.withdraw()
+
+    def ToTrackBookLocation(self):
+        self.eighthwin.deiconify()
+        self.Homewin.withdraw()
+
+    def ToBookCheckout(self):
+        self.ninthwin.deiconify()
+        self.Homewin.withdraw()
+
+    def ToReturnBook(self):
+        self.tenthwin.deiconify()
+        self.Homewin.withdraw()
+        
     def Connect(self):
         try:
             db = pymysql.connect(host="academic-mysql.cc.gatech.edu",passwd="DC5xMas8",
@@ -60,14 +92,14 @@ class GUI:
         self.database = self.Connect()
         c = self.database.cursor()
         
-        username = self.sv.get()
+        self.username = self.sv.get()
         password = self.sv2.get()
 
         #check to see if username and password is in the database
         #sql = "SELECT Username,Password FROM User"
         #c.execute(sql)
         sql = "SELECT COUNT(*) FROM User WHERE Username = %s AND Password = %s"
-        c.execute(sql,(username,password))
+        c.execute(sql,(self.username,password))
         data = c.fetchall()
         #print(data)
 
@@ -280,35 +312,303 @@ class GUI:
         f2 = Frame(self.fourthwin)
         f2.config(bg="white")
         f2.grid(row=2,column=0)
-        b = Button(f2,text="Back")
+        b = Button(f2,text="Home", command=self.ToHomeFromSearch)
         b.grid(row=4,column=0)
         b2 = Button(f2,text="Search",command=self.Search)
         b2.grid(row=4,column=1)
-        b3 = Button(f2,text="Close")
+        b3 = Button(f2,text="Close", command=self.ToLogin)
         b3.grid(row=4,column=2)
 
         #self.fourthwin.withdraw()
         #self.RequestExtension()
+
+    def ToHomeFromSearch(self):
+        self.HomeScreen()
+        self.fourthwin.withdraw()
+
+    def ToHomeFromHoldRequest(self):
+        self.HomeScreen()
+        self.fifthwin.withdraw()
 
     def Search(self):
         self.isbn = self.e.get()
         self.title = self.e2.get()
         self.author = self.e3.get()
 
+        print(self.title)
+
         db = self.Connect()
         c = db.cursor()
 
         print("searching for books")
 
+        sql1 = "UPDATE BookCopy a SET isOnHold=false WHERE (ISBN,CopyNum) in (SELECT ISBN, CopyNum FROM Issues b "\
+        "WHERE a.ISBN = b.ISBN AND a.CopyNum = b.CopyNum AND a.isOnHold = true AND isCheckedOut =false "\
+        "AND datediff(sysdate(),dateofissue)>3 AND ReturnDate>=sysdate())"
+        c.execute(sql1)
+        db.commit()
+
+        print("done updating in search")
+
+    #for books available
         #search title only
-        sql = "SELECT Book.ISBN, Title, Edition, COUNT(*) FROM Book,BookCopy WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve=false AND isCheckedOut=false AND isOnHold=false AND isDamaged=false and Title LIKE %s GROUP By Book.ISBN, Title, Edition"
-        c.execute(sql,('%' + self.title + '%s'))
-        data = c.fetchall()
-        print(data)
+        if self.isbn == "" and self.title != "" and self.author == "":
+            print("search with title")
+            sql = "SELECT Book.ISBN, Title, Edition, COUNT(*) FROM Book,BookCopy WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve=false AND "\
+            "isOnHold=false AND isCheckedOut=false AND isDamaged=false AND LOWER(Title) LIKE LOWER(%s) GROUP BY Book.ISBN, Title, Edition"
+            c.execute(sql,('%' + self.title + '%'))
+            #c.execute(sql)
+            print(('%' + self.title + '%'))
+        #search isbn only
+        elif self.isbn != "" and self.title == "" and self.author == "":
+            sql = "SELECT Book.ISBN,Title, Edition, COUNT(*) FROM Book,BookCopy WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve=false AND "\
+            "isCheckedOut=false AND isOnHold=false AND isDamaged=false AND Book.ISBN LIKE %s GROUP BY Book.ISBN, Title, Edition"
+            c.execute(sql,('%' + self.isbn + '%'))
+        #search author only
+        elif self.isbn == "" and self.title == "" and self.author != "":
+            sql = "SELECT ISBN, Title, Edition, COUNT(*) "\
+            "FROM ( SELECT DISTINCT BookCopy.ISBN, BookCopy.CopyNum, Title, Edition FROM Book, BookCopy, Author "\
+            "WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve = false AND isCheckedOut = False AND isOnHold=false AND "\
+            "isDamaged=FALSE AND Book.ISBN =Author.ISBN AND Lower(Authors) LIKE Lower(%s)) a "\
+            "GROUP BY ISBN, Title, Edition"
+            c.execute(sql,('%' + self.author + '%'))
+        #search title and isbn only
+        elif self.isbn != "" and self.title != "" and self.author == "":
+            sql = "SELECT Book.ISBN, Title, Edition, COUNT(*) FROM Book,BookCopy WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve=false AND "\
+            "isCheckedOut=false AND isOnHold=false AND isDamaged=false AND "\
+            "LOWER(Title) LIKE LOWER(%s) AND Book.ISBN LIKE %s GROUP BY Book.ISBN, Title, Edition"
+            c.execute(sql,(('%' + self.title + '%'),('%' + self.isbn + '%')))
+        #search title and author only
+        elif self.isbn == "" and self.title != "" and self.author != "":
+            sql = "SELECT ISBN, Title, Edition, COUNT(*) "\
+            "FROM ( SELECT DISTINCT BookCopy.ISBN, BookCopy.CopyNum, Title, Edition FROM Book, BookCopy, Author "\
+            "WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve = false AND isCheckedOut = False AND isOnHold=false AND "\
+            "isDamaged=FALSE AND Book.ISBN =Author.ISBN AND LOWER(Title) LIKE LOWER(%s) AND Lower(Authors) LIKE Lower(%s)) a "\
+            "GROUP BY ISBN, Title, Edition"
+            c.execute(sql,(('%' + self.title + '%'),('%' + self.author + '%')))
+        #search isbn and author only
+        elif self.isbn != "" and self.title == "" and self.author != "":
+            sql = "SELECT ISBN, Title, Edition, COUNT(*) "\
+            "FROM ( SELECT DISTINCT BookCopy.ISBN, BookCopy.CopyNum, Title, Edition FROM Book, BookCopy, Author "\
+            "WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve = false AND isCheckedOut = False AND isOnHold=false AND "\
+            "isDamaged=FALSE AND Book.ISBN =Author.ISBN AND Book.ISBN LIKE %s AND Lower(Authors) LIKE Lower(%s)) a "\
+            "GROUP BY ISBN, Title, Edition"
+            c.execute(sql,(('%' + self.isbn + '%'),('%' + self.author + '%')))
+        #search isbn, title, and author
+        elif self.isbn != "" and self.title != "" and self.author != "":
+            sql = "SELECT ISBN, Title, Edition, COUNT(*) "\
+            "FROM ( SELECT DISTINCT BookCopy.ISBN, BookCopy.CopyNum, Title, Edition FROM Book, BookCopy, Author "\
+            "WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve = false AND isCheckedOut = False AND isOnHold=false AND "\
+            "isDamaged=FALSE AND Book.ISBN =Author.ISBN AND LOWER(Title) LIKE LOWER(%s) AND Book.ISBN LIKE %s AND Lower(Authors) LIKE Lower(%s)) a "\
+            "GROUP BY ISBN, Title, Edition"
+            c.execute(sql,(('%' + self.title + '%'),('%' + self.isbn + '%'),('%' + self.author + '%')))
+        else:
+            error = messagebox.showinfo("Problem","You have to fill in at least one field.")
+
+        self.data = c.fetchall()
+        print(self.data)
+        print(self.data== ())
+        print(len(self.data))
+
+        for book in self.data:
+            print(book)
+
+        print(self.data[0][0])
+
+    #for books on reserve
+        #search title only
+        if self.isbn == "" and self.title != "" and self.author == "":
+            sql = "SELECT Book.ISBN, Title, Edition, COUNT(*) FROM Book,BookCopy WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve=true AND "\
+            "isDamaged=false AND LOWER(Title) LIKE LOWER(%s) GROUP BY Book.ISBN, Title, Edition"
+            c.execute(sql,('%' + self.title + '%'))
+            print(('%' + self.title + '%'))
+        #search isbn only
+        elif self.isbn != "" and self.title == "" and self.author == "":
+            sql = "SELECT Book.ISBN, Title, Edition, COUNT(*) FROM Book,BookCopy WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve=true AND "\
+            "isDamaged=false AND Book.ISBN LIKE %s GROUP BY Book.ISBN, Title, Edition"
+            c.execute(sql,('%' + self.isbn + '%'))
+        #search author only
+        elif self.isbn == "" and self.title == "" and self.author != "":
+            sql = "SELECT ISBN, Title, Edition, COUNT(*) "\
+            "FROM ( SELECT DISTINCT BookCopy.ISBN, BookCopy.CopyNum, Title, Edition FROM Book, BookCopy, Author "\
+            "WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve = true AND "\
+            "isDamaged=FALSE AND Book.ISBN =Author.ISBN AND Lower(Authors) LIKE Lower(%s)) a "\
+            "GROUP BY ISBN, Title, Edition"
+            c.execute(sql,('%' + self.author + '%'))
+        #search title and isbn only
+        elif self.isbn != "" and self.title != "" and self.author == "":
+            sql = "SELECT Book.ISBN, Title, Edition, COUNT(*) FROM Book,BookCopy WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve=true AND "\
+            "isDamaged=false AND LOWER(Title) LIKE LOWER(%s) AND Book.ISBN LIKE %s GROUP BY Book.ISBN, Title, Edition"
+            c.execute(sql,(('%' + self.title + '%'),('%' + self.isbn + '%')))
+        #search title and author only
+        elif self.isbn == "" and self.title != "" and self.author != "":
+            sql = "SELECT ISBN, Title, Edition, COUNT(*) "\
+            "FROM ( SELECT DISTINCT BookCopy.ISBN, BookCopy.CopyNum, Title, Edition FROM Book, BookCopy, Author "\
+            "WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve =true AND "\
+            "isDamaged=FALSE AND Book.ISBN =Author.ISBN AND LOWER(Title) LIKE LOWER(%s) AND Lower(Authors) LIKE Lower(%s)) a "\
+            "GROUP BY ISBN, Title, Edition"
+            c.execute(sql,(('%' + self.title + '%'),('%' + self.author + '%')))
+        #search isbn and author only
+        elif self.isbn != "" and self.title == "" and self.author != "":
+            sql = "SELECT ISBN, Title, Edition, COUNT(*) "\
+            "FROM ( SELECT DISTINCT BookCopy.ISBN, BookCopy.CopyNum, Title, Edition FROM Book, BookCopy, Author "\
+            "WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve = true AND "\
+            "isDamaged=FALSE AND Book.ISBN =Author.ISBN AND Book.ISBN LIKE %s AND Lower(Authors) LIKE Lower(%s)) a "\
+            "GROUP BY ISBN, Title, Edition"
+            c.execute(sql,(('%' + self.isbn + '%'),('%' + self.author + '%')))
+        #search isbn, title, and author
+        elif self.isbn != "" and self.title != "" and self.author != "":
+            sql = "SELECT ISBN, Title, Edition, COUNT(*) "\
+            "FROM ( SELECT DISTINCT BookCopy.ISBN, BookCopy.CopyNum, Title, Edition FROM Book, BookCopy, Author "\
+            "WHERE Book.ISBN = BookCopy.ISBN AND isBookOnReserve = true AND "\
+            "isDamaged=FALSE AND Book.ISBN =Author.ISBN AND LOWER(Title) LIKE LOWER(%s) AND Book.ISBN LIKE %s AND Lower(Authors) LIKE Lower(%s)) a "\
+            "GROUP BY ISBN, Title, Edition"
+            c.execute(sql,(('%' + self.title + '%'),('%' + self.isbn + '%'),('%' + self.author + '%')))
+        else:
+            error = messagebox.showinfo("Problem","You have to fill in at least one field.")
+
+        self.data2 = c.fetchall()
+        print(self.data2)
+
+        self.fourthwin.withdraw()
+        self.RequestHold()        
 
         c.close()
         db.close()
 
+    def RequestHold(self):
+        self.fifthwin = Toplevel()
+        self.fifthwin.config(bg="white")
+        self.fifthwin.title("Hold Request for a Book")
+
+        f = Frame(self.fifthwin)
+        f.grid(row=0,column=0)
+        l = Label(f,text="Books Available Summary",bg="white")
+        l.grid(row=0,column=0)
+
+        f2 = Frame(self.fifthwin, bg="white")
+        f2.grid(row=1,column=0)
+        l2 = Label(f2,text="Select",bg="white")
+        l2.grid(row=0,column=0)
+        l3 = Label(f2,text="ISBN",bg="white",relief=GROOVE,width=15)
+        l3.grid(row=0,column=1)
+        l4 = Label(f2,text="Title of the Book",bg="white",relief=GROOVE,width=40)
+        l4.grid(row=0,column=2)
+        l5 = Label(f2,text="Edition",bg="white",relief=GROOVE,width=15)
+        l5.grid(row=0,column=3)
+        l6 = Label(f2,text="#copies available",bg="white",relief=GROOVE,width=15)
+        l6.grid(row=0,column=4)
+
+        self.sv3 = StringVar()
+        self.sv3.set("a")
+        if self.data != () :
+            for x in range(len(self.data)):
+                r = Radiobutton(f2,text="",bg="white",variable=self.sv3,value=self.data[x][0])
+                r.grid(row=x+1,column=0)
+                l = Label(f2,text=self.data[x][0],bg="white",relief=GROOVE,width=15)
+                l.grid(row=x+1, column=1)
+                l2 = Label(f2,text=self.data[x][1],bg="white",relief=GROOVE,width=40)
+                l2.grid(row=x+1, column=2)
+                l3 = Label(f2,text=self.data[x][2],bg="white",relief=GROOVE,width=15)
+                l3.grid(row=x+1, column=3)
+                l4 = Label(f2,text=self.data[x][3],bg="white",relief=GROOVE,width=15)
+                l4.grid(row=x+1, column=4)
+
+        self.sv = StringVar()
+        self.sv2 = StringVar()
+
+        f3 = Frame(self.fifthwin,bg="white")
+        f3.grid(row=2,column=0)
+        l7 = Label(f3,text="Hold Request Date",bg="white")
+        l7.grid(row=0,column=0)
+        e = Entry(f3,state="readonly",textvariable=self.sv)
+        e.grid(row=0,column=1)
+        l8 = Label(f3,text="Estimated Return Date",bg="white")
+        l8.grid(row=0,column=2)
+        e2 = Entry(f3,state="readonly",textvariable=self.sv2)
+        e2.grid(row=0,column=3)
+
+        b = Button(f3,text="Back",command=self.ToSearchFromHoldRequest)
+        b.grid(row=1,column=1)
+        b2 = Button(f3,text="Submit",command=self.Hold)
+        b2.grid(row=1,column=2)
+        b3 = Button(f3,text="Close",command=self.ToHomeFromHoldRequest)
+        b3.grid(row=1,column=3)
+
+        f4 = Frame(self.fifthwin,bg="white")
+        f4.grid(row=3,column=0)
+        l9 = Label(f4,text="Books on Reserve",bg="white")
+        l9.grid(row=0,column=0)
+
+        f5 = Frame(self.fifthwin,bg="gray")
+        f5.grid(row=4,column=0)
+
+        l10 = Label(f5,text="ISBN",bg="gray",relief=GROOVE,width=15)
+        l10.grid(row=0,column=1)
+        l11 = Label(f5,text="Title of the Book",bg="gray",relief=GROOVE,width=40)
+        l11.grid(row=0,column=2)
+        l12 = Label(f5,text="Edition",bg="gray",relief=GROOVE,width=15)
+        l12.grid(row=0,column=3)
+        l13 = Label(f5,text="#copies available",bg="gray",relief=GROOVE,width=15)
+        l13.grid(row=0,column=4)
+
+        if self.data2 != ():
+            for i in range(len(self.data2)):
+                l = Label(f5,text=self.data2[i][0],bg="gray",relief=GROOVE,width=15)
+                l.grid(row=i+1, column=1)
+                l2 = Label(f5,text=self.data2[i][1],bg="gray",relief=GROOVE,width=40)
+                l2.grid(row=i+1, column=2)
+                l3 = Label(f5,text=self.data2[i][2],bg="gray",relief=GROOVE,width=15)
+                l3.grid(row=i+1, column=3)
+                l4 = Label(f5,text=self.data2[i][3],bg="gray",relief=GROOVE,width=15)
+                l4.grid(row=i+1, column=4)
+            
+    def Hold(self):
+        print(self.sv3.get())
+        isbn = self.sv3.get()
+
+        db = self.Connect()
+        c = db.cursor()
+
+        sql = "SELECT MIN(CopyNum) FROM BookCopy WHERE ISBN=%s AND "\
+              "isCheckedOut=false AND isOnHold=false AND isDamaged=false"
+
+        c.execute(sql,isbn)
+        copynum = c.fetchone()
+
+        print(copynum)
+
+        sql1 = "UPDATE BookCopy SET isOnHold=true WHERE ISBN=%s AND CopyNum=%s"
+        c.execute(sql1,(isbn,copynum))
+        db.commit()
+
+        sql2 = "SELECT MAX(Issue_ID)+1 FROM Issues"
+        c.execute(sql2)
+        ID = c.fetchone()
+        print(ID)
+        issueID = findall("\d+",str(ID))
+        print(int(issueID[0]))
+
+        sql3 = "INSERT INTO Issues (ISBN,Username,CopyNum,Issue_ID,DateofIssue,"\
+               "ExtensionDate,ReturnDate,CountOfExtensions) VALUES "\
+               "(%s,%s,%s,%s,sysdate(),sysdate(),date_add(sysdate(),INTERVAL 17 DAY),0)"
+        c.execute(sql3,(isbn,self.username,copynum,ID))
+        db.commit()
+
+        sql4 = "SELECT DateOfIssue,ReturnDate FROM Issues WHERE Issue_ID=%s"
+        c.execute(sql4,ID)
+
+        dates = c.fetchone()
+        dateofissue = dates[0]
+        returndate = dates[1]
+
+        self.sv.set(dateofissue)
+        self.sv2.set(returndate)
+        
+        showID = messagebox.showinfo("Issue_ID","Your Issue_ID is " + issueID[0])
+        
+        c.close()
+        db.close()
         
 
     def RequestExtension(self):
@@ -340,7 +640,6 @@ class GUI:
 
         self.sv = StringVar()
         
-
         self.e2 = Entry(f2,state="readonly",textvariable=self.sv)
         self.e2.grid(row=1,column=1)
         self.e3 = Entry(f2,state="readonly")
@@ -529,22 +828,21 @@ class GUI:
         self.Homewin = Toplevel()
         self.Homewin.title("Home Page")
         self.Homewin.config(bg="white")
-        
 
         f = Frame(self.Homewin)
         f.config(bg="white")
         f.grid(row=0,column=0)
-        b = Button(f,text="Seach Books",command=self.SearchBooks)#command=self.HomeScreen
+        b = Button(f,text="Seach Books",command=self.ToSearchFromHome)
         b.grid(row=0,column=0,padx=80,pady=10)
-        b2 = Button(f,text="Request Extension",command=self.RequestExtension)#command=self.HomeScreen
+        b2 = Button(f,text="Request Extension",command=self.ToRequestExtension)#command=self.HomeScreen
         b2.grid(row=1,column=0,padx=80,pady=10)
-        b3 = Button(f,text="Future Hold Request",command=self.FutureHoldRequest)#command=self.HomeScreen
+        b3 = Button(f,text="Future Hold Request",command=self.ToFutureHoldRequest)#command=self.HomeScreen
         b3.grid(row=2,column=0,padx=80,pady=10)
-        b4 = Button(f,text="Track Book Location",command=self.TrackBookLocation)#command=self.HomeScreen
+        b4 = Button(f,text="Track Book Location",command=self.ToTrackBookLocation)#command=self.HomeScreen
         b4.grid(row=3,column=0,padx=80,pady=10)
-        b5 = Button(f,text="Book Checkout",command=self.BookCheckout)#command=self.HomeScreen
+        b5 = Button(f,text="Book Checkout",command=self.ToBookCheckout)#command=self.HomeScreen
         b5.grid(row=4,column=0,padx=80,pady=10)
-        b6 = Button(f,text="Return Book",command=self.ReturnBook)#command=self.HomeScreen
+        b6 = Button(f,text="Return Book",command=self.ToReturnBook)#command=self.HomeScreen
         b6.grid(row=5,column=0,padx=80,pady=10)
 
 win = Tk()
