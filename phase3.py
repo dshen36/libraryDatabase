@@ -86,9 +86,7 @@ class GUI:
         self.Homewin.deiconify()
         self.eighthwin.withdraw()
 
-
     def ToBookCheckout(self):
-        #self.ninthwin.deiconify()
         self.Homewin.withdraw()
         self.BookCheckout()
 
@@ -908,8 +906,6 @@ class GUI:
         b2 = Button(f3,text="Home",command=self.ToHomeFromTrackLoc)
         b2.grid(row=0,column=0)
 
-
-
     def FindLocation(self):
         #self.ISBN = self.e.get()
         isbn = (str(self.e.get()))
@@ -937,42 +933,121 @@ class GUI:
             self.sv5.set(str(data[3]))
 
     def BookCheckout(self):
-        
-        self.ninthwin = Toplevel()
-        self.ninthwin.config(bg="white")
-        self.ninthwin.title("Book Checkout")
-        
-        f = Frame(self.ninthwin)
-        f.config(bg="white")
-        f.grid(row=1,column=0)
-        l=Label(f,text="Issue Id",bg="white")
-        l.grid(row=1,column=0,sticky=W)
-        l2=Label(f,text="ISBN",bg="white")
-        l2.grid(row=2,column=0,sticky=W)
-        l3=Label(f,text="Check out Date",bg="white")
-        l3.grid(row=3,column=0,sticky=W)
-        self.e = Entry(f)
-        self.e.grid(row=1,column=1,padx=10,pady=15)
-        self.e2 = Entry(f,state="readonly")
-        self.e2.grid(row=2,column=1,padx=10,pady=15)
-        self.e3 = Entry(f,state="readonly")
-        self.e3.grid(row=3,column=1,padx=10,pady=15)
-        
-        l4=Label(f,text="User Name",bg="white")
-        l4.grid(row=1,column=2,sticky=W)
-        l5=Label(f,text="Copy #",bg="white")
-        l5.grid(row=2,column=2,sticky=W)
-        l6=Label(f,text="Estimated Return Date",bg="white")
-        l6.grid(row=3,column=2,sticky=W)
-        self.e = Entry(f,state="readonly")
-        self.e.grid(row=1,column=3,padx=10,pady=15)
-        self.e2 = Entry(f,state="readonly")
-        self.e2.grid(row=2,column=3,padx=10,pady=15)
-        self.e3 = Entry(f,state="readonly")
-        self.e3.grid(row=3,column=3,padx=10,pady=15)
+         self.ninthwin = Toplevel()
+         self.ninthwin.config(bg="white")
+         self.ninthwin.title("Book Checkout")
 
-        b = Button(f,text="Confirm",width=15)
-        b.grid(row=4,column=2)
+         self.sv = StringVar()  #issueid
+         self.sv2 = StringVar() #ISBN
+         self.sv3 = StringVar() #checkout date
+         self.sv4 = StringVar() #username
+         self.sv5 = StringVar() #copyNum
+         self.sv6 = StringVar() #estimated return
+        
+         f = Frame(self.ninthwin)
+         f.config(bg="white")
+         f.grid(row=1,column=0)
+         l=Label(f,text="Issue Id",bg="white") #ISSUE ID IS THE ONLY GET
+         l.grid(row=1,column=0,sticky=W)
+         l2=Label(f,text="ISBN",bg="white")
+         l2.grid(row=2,column=0,sticky=W)
+         l3=Label(f,text="Check out Date",bg="white")
+         l3.grid(row=3,column=0,sticky=W)
+         self.e = Entry(f, bg="white",textvariable=self.sv)
+         self.e.grid(row=1,column=1,padx=10,pady=15)
+         self.e2 = Entry(f,state="readonly", textvariable=self.sv2)
+         self.e2.grid(row=2,column=1,padx=10,pady=15)
+         self.e3 = Entry(f,state="readonly", textvariable=self.sv3)
+         self.e3.grid(row=3,column=1,padx=10,pady=15)
+        
+         l4=Label(f,text="User Name",bg="white")
+         l4.grid(row=1,column=2,sticky=W)
+         l5=Label(f,text="Copy #",bg="white")
+         l5.grid(row=2,column=2,sticky=W)
+         l6=Label(f,text="Estimated Return Date",bg="white")
+         l6.grid(row=3,column=2,sticky=W)
+         self.e4 = Entry(f,state="readonly", textvariable=self.sv4)
+         self.e4.grid(row=1,column=3,padx=10,pady=15)
+         self.e5 = Entry(f,state="readonly", textvariable=self.sv5)
+         self.e5.grid(row=2,column=3,padx=10,pady=15)
+         self.e6 = Entry(f,state="readonly", textvariable=self.sv6)
+         self.e6.grid(row=3,column=3,padx=10,pady=15)
+
+         b = Button(f,text="Confirm",width=15, command=self.ConfirmCheckout)
+         b.grid(row=4,column=2)
+         b1 = Button(f, text="Submit Issue ID", width=15, command=self.Checkout)
+         b1.grid(row=4, column=1)
+        
+    def Checkout(self):
+        #issue id is an int
+         issueID = int(self.e.get())
+         self.issueID = (issueID,)
+         db = self.Connect()
+         c = db.cursor()
+         sql = "SELECT Issue_ID FROM Issues"
+         c.execute(sql)
+         data = c.fetchall()
+         print(issueID)
+         print(data)
+         print(self.issueID)
+         if (self.issueID) not in data:
+             error = messagebox.showinfo("Error!", "Issue ID not in library.")
+         else:
+             sql1 = ("SELECT Username, ISBN, CopyNum FROM Issues WHERE Issue_ID = (%s)")
+             c.execute(sql1, (issueID))
+             data = c.fetchall()
+             #now have the data with which to populate
+             print(data)
+             self.username = data[0][0]
+             self.ISBN = data[0][1]
+             self.CopyNum = data[0][2]
+             sql2 = ("SELECT COUNT(*) FROM StudentFaculty WHERE Username = (%s) AND isDebarred = 0")
+             c.execute(sql2, (self.username))
+             data = c.fetchall()
+             print(data)
+             if (data[0][0])==0: #if debarred, error message
+                 error = messagebox.showinfo("Error!", "This user is debarred.")
+             else: # if not debarred, check hold
+                 #sysDate = time.strftime
+                 sql3 = ("SELECT COUNT(*) FROM Issues WHERE DATEDIFF(sysdate(), DateofIssue)>3 AND Issue_ID = (%s)")
+                 c.execute(sql3, (issueID))
+                 data = c.fetchall()
+                 if data==1: #throw error, hold has been dropped
+                     error = messagebox.showinfo("Error!", "This user's hold has been dropped.")
+                 else: #user is allowed to continue process now
+                     self.sv2.set(str(self.ISBN))
+                     self.sv4.set(str(self.username))
+                     self.sv5.set(str(self.CopyNum))
+##                     self.sv3.set(str(sysdate()))
+                     sql4 = ("UPDATE Issues SET DateOfIssue = sysdate(), ReturnDate = DATE_ADD(sysdate(), INTERVAL 14 DAY), ExtensionDate=sysdate() WHERE Issue_ID = (%s)")
+                     c.execute(sql4, (issueID))
+                     db.commit()
+                     data = c.fetchall()
+
+                     c.close()
+                     db.close()
+##                     self.sv6.set(str(data))
+
+    def ConfirmCheckout(self):
+         db = self.Connect()
+         c = db.cursor()
+         issueID = self.issueID[0]
+         sql5 = ("UPDATE BookCopy SET isOnHold = 0, isCheckedOut = 1 WHERE (ISBN, CopyNum) IN (SELECT ISBN, CopyNum FROM Issues WHERE Issue_ID = (%s))")
+         c.execute(sql5, issueID)
+         db.commit()
+
+         sql6 = "SELECT DateOfIssue,ReturnDate FROM Issues WHERE Issue_ID=%s"
+         c.execute(sql6,issueID)
+         data = c.fetchone()
+
+         dataofissue = data[0]
+         returndate = data[1]
+
+         self.sv3.set(dataofissue)
+         self.sv6.set(returndate)
+
+         c.close()
+         db.close()
 
     def ReturnBook(self):
         self.tenthwin = Toplevel()
@@ -1063,7 +1138,7 @@ class GUI:
  
     def LostDamagedBookPenalty(self): #ADD TO CLARISSA
         self.LostDamagedBookPenalty = Toplevel()
-        self.LostDamagedBookPenalty.title("Home Page")
+        self.LostDamagedBookPenalty.title("Penalty Fees")
         self.LostDamagedBookPenalty.config(bg="white")
         
         self.ISBN = StringVar()
