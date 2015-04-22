@@ -88,8 +88,9 @@ class GUI:
 
 
     def ToBookCheckout(self):
-        self.ninthwin.deiconify()
+        #self.ninthwin.deiconify()
         self.Homewin.withdraw()
+        self.BookCheckout()
 
     def ToReturnBook(self):
         self.ReturnBook()
@@ -1162,7 +1163,7 @@ class GUI:
 
     def DamBooksReport(self): #ADD TO CLARISSA
         self.DamBooksReport = Toplevel()
-        self.DamBooksReport.title("Home Page")
+        self.DamBooksReport.title("Damaged Books Report")
         self.DamBooksReport.config(bg="white")
         
         f = Frame(self.DamBooksReport)
